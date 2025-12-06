@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Research: Multi-Task Cognitive & Decision Survey</title>
+
+  <!-- SurveyJS default theme CSS -->
+  <link href="https://unpkg.com/survey-core/defaultV2.css" rel="stylesheet" />
+
+  <!-- jQuery (required) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- SurveyJS jQuery bundle (provides the jQuery renderer) -->
+  <script src="https://unpkg.com/survey-jquery/survey.jquery.min.js"></script>
+
+  <!-- Chart.js for visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: "Segoe UI", Roboto, Arial, sans-serif; margin: 18px; color: #222; }
+    h1 { margin-bottom: 6px; }
+    #surveyContainer { max-width: 1000px; margin: 8px 0 18px 0; }
+    #resultsContainer { max-width: 1000px; padding: 16px; border-radius: 8px; background: #fafafa; border: 1px solid #e3e3e3; display: none; }
+    .charts { display:flex; gap: 18px; flex-wrap:wrap; margin-top: 12px; }
+    .chartCard { width: 300px; background:#fff; border:1px solid #eee; border-radius:8px; padding:12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .scoreBig { font-size: 1.6rem; font-weight:700; color:#1f6feb; }
+    .feedback { margin-top: 10px; padding:10px; border-radius:6px; background:#fff8e1; border:1px solid #ffe7a0; }
+    .small { font-size:0.9rem; color:#444; }
+    .muted { color:#666; font-size:0.9rem; }
+    @media (max-width:960px) { .chartCard { width: 100%; } }
+    /* small help hint */
+    .hint { font-size:0.9rem; color:#555; margin-top:6px; background:#f7fbff; padding:8px; border-radius:6px; border:1px solid #dfeeff; }
+    /* small table style for final raw data display */
+    table.resultsTable { width:100%; border-collapse:collapse; margin-top:10px; }
+    table.resultsTable td, table.resultsTable th { border:1px solid #eee; padding:8px; vertical-align:top; }
+    /* visually separate sections of result */
+    .resultSection { margin-top:12px; }
+  </style>
+</head>
+<body>
+  <h1>Research: Multi-Task Cognitive & Decision Survey</h1>
+  <p class="muted">Five interactive tasks. Each task collects structured inputs and is automatically evaluated. Read each task's instructions carefully before answering.</p>
+
+  <div id="surveyContainer"></div>
+
+  <!-- Results area: will show computed indices, charts, labels, feedback and optional raw data -->
+  <div id="resultsContainer" aria-live="polite">
+    <h2>Results & Evaluation</h2>
+
+    <div id="summaryBoxes" class="charts"></div>
+
+    <div id="chartsRow" class="charts" aria-hidden="false"></div>
+
+    <div id="feedbackText" class="resultSection"></div>
+
+    <div id="rawDataSection" class="resultSection">
+      <h3>Collected Responses (raw)</h3>
+      <div id="rawData"></div>
+    </div>
+
+    <div id="serverSendStatus" class="muted" style="margin-top:10px;"></div>
+  </div>
+
+  <script>
+    // Use SurveyJS theme
+    Survey.StylesManager.applyTheme("defaultV2");
+
+    // ---------------------------
+    // Survey Definition (5 pages)
+    // Each page is a task. To add tasks, append to pages[].
+    // ---------------------------
+    var surveyJSON = {
+      title: "Multi-Task Cognitive & Decision Survey (Research)",
+      showProgressBar: "top",
+      goNextPageAutomatic: false,
+      pages: [
+        // PAGE 1: Sudoku 4x4 task
+        {
+          name: "sudoku",
+          title: "Task 1 — 4x4 Sudoku (Logical Reasoning)",
+          description: "Fill every row, column and each 2x2 subgrid with numbers 1–4 exactly once. Some cells are pre-filled. Use the dropdowns to choose numbers.",
+          elements: [
+            {
+              type: "html",
+              name: "sudoku_instructions",
+              html: "<div class='hint'><strong>Instructions & hints:</strong> This is a reduced-size Sudoku. Check rows, columns and 2x2 boxes. You will be scored automatically from 0 (none correct) to 100 (perfect).</div>"
+            },
+            // We'll create 16 dropdown questions, arranged logically in the UI by labeling names row-col
+            // Prefilled cells are readOnly with defaultValue.
+            // Row 1
+            { type: "dropdown", name: "r1c1", title: "Row 1 - Col 1", choices: [1,2,3,4], defaultValue: 1, readOnly: true },
+            { type: "dropdown", name: "r1c2", title: "Row 1 - Col 2", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r1c3", title: "Row 1 - Col 3", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r1c4", title: "Row 1 - Col 4", choices: [1,2,3,4], defaultValue: 4, readOnly: true },
+
+            // Row 2
+            { type: "dropdown", name: "r2c1", title: "Row 2 - Col 1", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r2c2", title: "Row 2 - Col 2", choices: [1,2,3,4], defaultValue: 4, readOnly: true },
+            { type: "dropdown", name: "r2c3", title: "Row 2 - Col 3", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r2c4", title: "Row 2 - Col 4", choices: [1,2,3,4] },
+
+            // Row 3
+            { type: "dropdown", name: "r3c1", title: "Row 3 - Col 1", choices: [1,2,3,4], defaultValue: 3, readOnly: true },
+            { type: "dropdown", name: "r3c2", title: "Row 3 - Col 2", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r3c3", title: "Row 3 - Col 3", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r3c4", title: "Row 3 - Col 4", choices: [1,2,3,4] },
+
+            // Row 4
+            { type: "dropdown", name: "r4c1", title: "Row 4 - Col 1", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r4c2", title: "Row 4 - Col 2", choices: [1,2,3,4] },
+            { type: "dropdown", name: "r4c3", title: "Row 4 - Col 3", choices: [1,2,3,4], defaultValue: 2, readOnly: true },
+            { type: "dropdown", name: "r4c4", title: "Row 4 - Col 4", choices: [1,2,3,4], defaultValue: 1, readOnly: true },
+
+            // Collect meta info: did participant use external help (AI or other) for this task and self-confidence
+            { type: "radiogroup", name: "sudoku_ai_assist", title: "Did you use any external assistance (e.g., tools, AI, calculators) to solve this Sudoku?", choices: ["No","Yes"], isRequired: true },
+            { type: "text", name: "sudoku_confidence", inputType: "number", title: "How confident are you in your Sudoku solution? (0-100)", validators: [{type: "numeric", minValue: 0, maxValue: 100}], placeHolder: "e.g., 80" }
+          ]
+        },
+
+        // PAGE 2: Meal planning task
+        {
+          name: "meal_planning",
+          title: "Task 2 — 3-Day Meal Planning (Planning & Budgeting)",
+          description: "Plan meals for 3 days and estimate costs. We will check the total cost against your declared budget and provide a basic nutritional-balance hint.",
+          elements: [
+            {
+              type: "html",
+              name: "meal_instructions",
+              html: "<div class='hint'><strong>Instructions & hints:</strong> For each day, enter the main items for Breakfast, Lunch and Dinner (short descriptions) and an estimated cost for the day in USD. Use realistic costs. We will compute total cost and check against budget. Optional nutritional balance grading uses simple keyword heuristics (e.g., 'chicken', 'salad', 'beans' = protein/veg).</div>"
+            },
+
+            // Matrix dropdown: rows are days; columns are Breakfast/Lunch/Dinner/Estimated cost
+            {
+              type: "matrixdropdown",
+              name: "meal_matrix",
+              title: "Enter meals and estimated daily cost",
+              columns: [
+                { name: "breakfast", title: "Breakfast", cellType: "text", placeHolder: "e.g., oatmeal, fruit" },
+                { name: "lunch", title: "Lunch", cellType: "text", placeHolder: "e.g., salad with chicken" },
+                { name: "dinner", title: "Dinner", cellType: "text", placeHolder: "e.g., pasta with vegetables" },
+                { name: "cost", title: "Estimated cost (USD)", cellType: "text", inputType: "number", placeHolder: "e.g., 12.50" }
+              ],
+              defaultValue: [
+                { breakfast: "", lunch: "", dinner: "", cost: "" },
+                { breakfast: "", lunch: "", dinner: "", cost: "" },
+                { breakfast: "", lunch: "", dinner: "", cost: "" }
+              ],
+              rows: [
+                { value: "day1", text: "Day 1" },
+                { value: "day2", text: "Day 2" },
+                { value: "day3", text: "Day 3" }
+              ],
+              isAllRowRequired: false
+            },
+
+            { type: "text", name: "meal_budget", inputType: "number", title: "Enter your total budget for 3 days (USD)", isRequired: true, placeHolder: "e.g., 60" },
+
+            // Did they use assistance?
+            { type: "radiogroup", name: "meals_ai_assist", title: "Did you use external assistance (e.g., AI) to plan these meals?", choices: ["No","Yes"], isRequired: true },
+
+            // Self confidence
+            { type: "text", name: "meals_confidence", inputType: "number", title: "How confident are you in this meal plan's cost accuracy and nutrition? (0-100)", validators: [{type: "numeric", minValue: 0, maxValue: 100}], placeHolder: "e.g., 70" }
+          ]
+        },
+
+        // PAGE 3: Creativity task
+        {
+          name: "creativity",
+          title: "Task 3 — Creativity: 10 Uses for a Paperclip (Divergent Thinking)",
+          description: "List 10 distinct uses for a common paperclip. Creativity is scored by originality and idea diversity across categories.",
+          elements: [
+            {
+              type: "html",
+              name: "creativity_instructions",
+              html: "<div class='hint'><strong>Instructions & hints:</strong> Provide 10 unique uses. Think beyond the first obvious uses. The scoring rubric will reward uncommon uses and conceptual diversity (e.g., utility, art, survival, tech). Avoid repeating near-duplicates.</div>"
+            },
+
+            // 10 text inputs, labelled 1..10
+            { type: "text", name: "use1", title: "1." },
+            { type: "text", name: "use2", title: "2." },
+            { type: "text", name: "use3", title: "3." },
+            { type: "text", name: "use4", title: "4." },
+            { type: "text", name: "use5", title: "5." },
+            { type: "text", name: "use6", title: "6." },
+            { type: "text", name: "use7", title: "7." },
+            { type: "text", name: "use8", title: "8." },
+            { type: "text", name: "use9", title: "9." },
+            { type: "text", name: "use10", title: "10." },
+
+            { type: "radiogroup", name: "creativity_ai_assist", title: "Did you use external assistance (e.g., AI) to generate these ideas?", choices: ["No","Yes"], isRequired: true },
+            { type: "text", name: "creativity_confidence", inputType: "number", title: "How confident are you in the originality of these ideas? (0-100)", validators: [{type: "numeric", minValue: 0, maxValue: 100}], placeHolder: "e.g., 65" }
+          ]
+        },
+
+        // PAGE 4: Event planning task
+        {
+          name: "event_planning",
+          title: "Task 4 — Event Planning: 6 Steps for a Small Community Event (Project Planning)",
+          description: "List 6 ordered steps to organize a small community event. The evaluation will check for planning elements (objective, venue, date/time, budget, promotion, volunteers, permits).",
+          elements: [
+            {
+              type: "html",
+              name: "event_instructions",
+              html: "<div class='hint'><strong>Instructions & hints:</strong> Provide 6 numbered steps. Be concise but include necessary details for each step (what, who, when, estimated resources). Steps should form a coherent sequence.</div>"
+            },
+
+            { type: "text", name: "step1", title: "Step 1 (e.g., Define objective & scope)" },
+            { type: "text", name: "step2", title: "Step 2 (e.g., Budget & resources)" },
+            { type: "text", name: "step3", title: "Step 3 (e.g., Secure venue & permits)" },
+            { type: "text", name: "step4", title: "Step 4 (e.g., Recruit volunteers & partners)" },
+            { type: "text", name: "step5", title: "Step 5 (e.g., Promotion & outreach)" },
+            { type: "text", name: "step6", title: "Step 6 (e.g., Day-of operations & evaluation)" },
+
+            { type: "radiogroup", name: "event_ai_assist", title: "Did you use external assistance (e.g., AI) to craft these steps?", choices: ["No","Yes"], isRequired: true },
+            { type: "text", name: "event_confidence", inputType: "number", title: "How confident are you in the feasibility of this event plan? (0-100)", validators: [{type: "numeric", minValue: 0, maxValue: 100}], placeHolder: "e.g., 75" }
+          ]
+        },
+
+        // PAGE 5: Community problem task
+        {
+          name: "community_problem",
+          title: "Task 5 — Community Problem Solving (Problem-Solving & Reasoning)",
+          description: "Propose 3 distinct solutions for a common city problem, choose the best, and justify your choice. The system will evaluate feasibility, clarity, and reasoning.",
+          elements: [
+            {
+              type: "html",
+              name: "community_instructions",
+              html: "<div class='hint'><strong>Instructions & hints:</strong> Choose a concrete city problem (e.g., traffic throttling at rush hour, urban littering). Provide 3 distinct solutions, then select the one you consider best and justify your choice by comparing pros, cons, cost and timeline.</div>"
+            },
+
+            { type: "text", name: "problem_statement", title: "Describe the community problem you are addressing (1–2 sentences):", placeHolder: "e.g., Heavy traffic congestion at downtown intersection during morning rush." },
+
+            { type: "text", name: "solution1", title: "Solution 1 (short description):" },
+            { type: "text", name: "solution2", title: "Solution 2 (short description):" },
+            { type: "text", name: "solution3", title: "Solution 3 (short description):" },
+
+            { type: "radiogroup", name: "selected_solution", title: "Which solution do you consider best?", choices: ["Solution 1","Solution 2","Solution 3"], isRequired: true },
+            { type: "comment", name: "justification", title: "Justify your selected solution (pros, cons, estimated cost/time if possible):", isRequired: true },
+
+            { type: "radiogroup", name: "community_ai_assist", title: "Did you use external assistance (e.g., AI) to develop these solutions?", choices: ["No","Yes"], isRequired: true },
+            { type: "text", name: "community_confidence", inputType: "number", title: "How confident are you in your chosen solution? (0-100)", validators: [{type: "numeric", minValue: 0, maxValue: 100}], placeHolder: "e.g., 60" },
+
+            // Endnote and optional server send toggle
+            {
+              type: "html",
+              name: "end_note",
+              html: "<div class='hint'><strong>Finish:</strong> Review your answers and press Complete to receive your results. Optionally provide a destination URL to send collected data (researchers only) below.</div>"
+            },
+
+            { type: "checkbox", name: "consent_server_send", title: "If you are a researcher and wish to send data to a server, check to enable sending", choices: ["Enable sending"], colCount: 1 },
+            { type: "text", name: "server_endpoint", title: "Server endpoint (HTTPS) to receive the JSON payload (optional)", placeHolder: "e.g., https://example.org/receive" }
+          ]
+        }
+      ]
+    };
+
+    // Create survey model and render immediately
+    var survey = new Survey.Model(surveyJSON);
+    $("#surveyContainer").Survey({ model: survey });
+
+    // Helper: escape HTML when rendering user-provided strings
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return "";
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+    }
+
+    // Utility: safe parse float, fallback to 0
+    function toNumber(x) {
+      var n = parseFloat((x+"").replace(",","."));
+      return isNaN(n) ? 0 : n;
+    }
+
+    // ---------------------------
+    // Scoring and evaluation functions for each task
+    // Each returns an object: {score: 0-100, details: {...}}
+    // ---------------------------
+
+    // Sudoku evaluator: expects values r1c1..r4c4
+    function evaluateSudoku(data) {
+      // Build grid as integers (0 for empty)
+      var grid = [];
+      for (var r=1;r<=4;r++) {
+        var row = [];
+        for (var c=1;c<=4;c++) {
+          var key = "r"+r+"c"+c;
+          var val = data[key];
+          var n = parseInt(val);
+          row.push(isNaN(n) ? 0 : n);
+        }
+        grid.push(row);
+      }
+
+      // Validation rules: rows 1..4 each are permutations of 1..4; same for cols; subgrids 2x2.
+      var correctCount = 0;
+      var totalChecks = 4*3; // 4 rows + 4 cols + 4 boxes = 12 checks
+      var rowCorrect = [];
+      var colCorrect = [];
+      var boxCorrect = [];
+
+      // check rows
+      for (var r=0;r<4;r++) {
+        var seen = {};
+        var ok = true;
+        for (var c=0;c<4;c++) {
+          var v = grid[r][c];
+          if (v <1 || v>4 || seen[v]) { ok = false; break; }
+          seen[v]=true;
+        }
+        rowCorrect.push(ok);
+        if (ok) correctCount++;
+      }
+
+      // check cols
+      for (var c=0;c<4;c++) {
+        var seen = {};
+        var ok = true;
+        for (var r=0;r<4;r++) {
+          var v = grid[r][c];
+          if (v <1 || v>4 || seen[v]) { ok = false; break; }
+          seen[v]=true;
+        }
+        colCorrect.push(ok);
+        if (ok) correctCount++;
+      }
+
+      // check 2x2 boxes: (0,0),(0,2),(2,0),(2,2)
+      var boxCoords = [[0,0],[0,2],[2,0],[2,2]];
+      for (var bi=0;bi<4;bi++) {
+        var sr = boxCoords[bi][0], sc = boxCoords[bi][1];
+        var seen = {};
+        var ok = true;
+        for (var r=sr;r<sr+2;r++) for (var c=sc;c<sc+2;c++){
+          var v = grid[r][c];
+          if (v <1 || v>4 || seen[v]) { ok = false; break; }
+          seen[v] = true;
+        }
+        boxCorrect.push(ok);
+        if (ok) correctCount++;
+      }
+
+      // Also give partial credit for individual correct cells: count how many cells match a valid completed Sudoku.
+      // Best way: try to infer unique solution? For simplicity we compute cell correctness by checking if a given cell conflicts with row/col/box duplicates.
+      var cellCorrectCount = 0;
+      for (var r=0;r<4;r++) for (var c=0;c<4;c++){
+        var v = grid[r][c];
+        if (v <1 || v>4) continue; // empty or invalid
+        var ok = true;
+        // check duplicates in row
+        for (var cc=0;cc<4;cc++) if (cc!==c && grid[r][cc]===v) ok=false;
+        for (var rr=0;rr<4;rr++) if (rr!==r && grid[rr][c]===v) ok=false;
+        // box
+        var br = Math.floor(r/2)*2, bc = Math.floor(c/2)*2;
+        for (var rr=br;rr<br+2;rr++) for (var cc=bc;cc<bc+2;cc++) if (!(rr===r && cc===c) && grid[rr][cc]===v) ok=false;
+        if (ok) cellCorrectCount++;
+      }
+
+      // Derive score: give 70% weight to structural correctness (rows/cols/boxes), 30% to cell correctness.
+      var structuralScore = Math.round((correctCount / totalChecks) * 100);
+      var cellScore = Math.round((cellCorrectCount / 16) * 100);
+      var finalScore = Math.round(structuralScore * 0.7 + cellScore * 0.3);
+
+      return {
+        score: finalScore,
+        details: {
+          structuralScore: structuralScore,
+          cellScore: cellScore,
+          correctRowFlags: rowCorrect,
+          correctColFlags: colCorrect,
+          correctBoxFlags: boxCorrect,
+          cellCorrectCount: cellCorrectCount
+        }
+      };
+    }
+
+    // Meal planning evaluator
+    function evaluateMeals(data) {
+      var matrix = data["meal_matrix"] || {};
+      // matrix is an object keyed by row values ('day1','day2','day3') each containing an object of columns
+      var days = ["day1","day2","day3"];
+      var totalCost = 0;
+      var costCount = 0;
+      var nutritionScore = 0;
+      var nutritionChecks = 0;
+
+      // look for protein/veg keywords to give simple nutrition credit
+      var proteinKeywords = ["chicken","beef","pork","tofu","beans","lentil","egg","eggs","fish","salmon","tuna"];
+      var vegKeywords = ["salad","vegetable","vegetables","spinach","broccoli","carrot","lettuce","kale","tomato","pepper"];
+
+      days.forEach(function(day){
+        var row = matrix[day] || {};
+        var costVal = toNumber(row["cost"]);
+        if (costVal > 0) { totalCost += costVal; costCount++; }
+        var dayScore = 0;
+        // check breakfast/lunch/dinner for protein+veg presence
+        var m = (row["breakfast"] || "") + " " + (row["lunch"] || "") + " " + (row["dinner"] || "");
+        var mLower = m.toLowerCase();
+        var hasProtein = proteinKeywords.some(function(k){return mLower.indexOf(k) !== -1;});
+        var hasVeg = vegKeywords.some(function(k){return mLower.indexOf(k) !== -1;});
+        if (hasProtein) dayScore += 0.6;
+        if (hasVeg) dayScore += 0.4;
+        nutritionScore += dayScore;
+        nutritionChecks++;
+      });
+
+      var averageNutrition = nutritionChecks ? (nutritionScore / nutritionChecks) * 100 : 0;
+
+      // Budget check
+      var budget = toNumber(data["meal_budget"]);
+      var budgetFit = (budget>0) ? (totalCost <= budget) : false;
+      var budgetRatio = (budget>0) ? Math.min(1, totalCost / budget) : 0;
+      // score around budget fit: 100 if total <= budget and nutrition good; penalize over-budget
+      var budgetScore = budgetFit ? 100 : Math.round(Math.max(0, 100 - (budgetRatio - 1) * 200)); // if 50% over budget, heavy penalty
+
+      // Combined score: nutrition 50%, budget 50%
+      var finalScore = Math.round(averageNutrition * 0.5 + budgetScore * 0.5);
+
+      return {
+        score: finalScore,
+        details: {
+          totalCost: totalCost,
+          budget: budget,
+          budgetFit: budgetFit,
+          budgetScore: budgetScore,
+          averageNutritionPercent: Math.round(averageNutrition)
+        }
+      };
+    }
+
+    // Creativity evaluator: 10 text inputs. Use list of common uses to penalize obvious answers and reward diversity across categories.
+    function evaluateCreativity(data) {
+      var items = [];
+      for (var i=1;i<=10;i++) items.push((data["use"+i]||"").trim());
+
+      // A small seed of extremely common answers:
+      var commonUses = [
+        "hold paper", "paper holder", "bookmark", "unclog", "reset button", "pick lock", "eject sim",
+        "hanger", "make a hook", "wire", "fasten", "key ring", "bend", "clip", "pin"
+      ];
+      var commonNormalized = commonUses.map(function(s){return s.toLowerCase();});
+
+      // categories by keywords to reward diversity
+      var categories = {
+        "office": ["paper","clip","hold","fasten","bookmark","binder"],
+        "repair": ["wire","reset","short","solder","unclog","reset"],
+        "survival": ["fish","hook","fire","strap","shackle"],
+        "fashion": ["jewelry","earring","necklace","pin","bracelet","hair"],
+        "art": ["sculpt","mobile","art","model","frame"],
+        "tech": ["sim","eject","connector","plug","antenna","sensor","probe"],
+        "security": ["lock","pick","shackle"]
+      };
+
+      // Evaluate originality per item: 0-10
+      var originalityPoints = [];
+      var usedNormalized = [];
+      for (var i=0;i<items.length;i++) {
+        var txt = (items[i]||"").toLowerCase();
+        var clean = txt.replace(/[^a-z0-9\s]/g,"").trim();
+        if (!clean) { originalityPoints.push(0); usedNormalized.push(""); continue; }
+        usedNormalized.push(clean);
+
+        // exact match against common list => low points
+        var isCommon = commonNormalized.some(function(c){ return clean.indexOf(c) !== -1 || c.indexOf(clean) !== -1; });
+        var points = isCommon ? 2 : 6;
+
+        // length and specificity boost
+        if (clean.split(" ").length >= 3) points += 2;
+        // novelty boost: if not present among user's other answers
+        var duplicates = usedNormalized.filter(function(u){ return u && u === clean; }).length;
+        if (duplicates > 1) points = Math.max(0, points - 3); // penalize repeats
+        originalityPoints.push(Math.min(10, points));
+      }
+
+      // Diversity: map each answer to a category (if possible)
+      var usedCategories = {};
+      items.forEach(function(it, idx){
+        var t = (it||"").toLowerCase();
+        for (var cat in categories) {
+          if (categories[cat].some(function(k){return t.indexOf(k)!==-1;})) {
+            usedCategories[cat] = true;
+            break;
+          }
+        }
+      });
+      var diversityScore = Math.min(1, Object.keys(usedCategories).length / 4); // out of 4 distinct categories yields full diversity
+      var avgOriginality = originalityPoints.length ? (originalityPoints.reduce(function(a,b){return a+b},0) / originalityPoints.length) : 0;
+
+      // Final creativity score: originality (60%) + diversity(40%)
+      var finalScore = Math.round(avgOriginality * 10 * 0.6 + diversityScore * 100 * 0.4);
+
+      return {
+        score: finalScore,
+        details: {
+          originalityPoints: originalityPoints,
+          avgOriginality: Math.round(avgOriginality*10),
+          categoriesUsed: Object.keys(usedCategories),
+          diversityPercent: Math.round(diversityScore*100)
+        }
+      };
+    }
+
+    // Event planning evaluator: 6 steps, each step checked for presence of key planning elements.
+    function evaluateEventPlan(data) {
+      var steps = [];
+      for (var i=1;i<=6;i++) steps.push((data["step"+i]||"").toLowerCase());
+
+      // Keywords representing core planning elements
+      var elements = {
+        objective: ["objective","purpose","aim","goal"],
+        date: ["date","time","schedule","when","day","weekday","weekend"],
+        venue: ["venue","location","site","place","hall","park"],
+        budget: ["budget","cost","estimate","fund","expense","price"],
+        promotion: ["promot","advertis","flyer","social","post","email"],
+        volunteers: ["volunteer","staff","team","helper"],
+        permits: ["permit","license","permission","approval"]
+      };
+
+      var found = {};
+      for (var key in elements) found[key]=false;
+      steps.forEach(function(s){
+        for (var key in elements) {
+          elements[key].forEach(function(kw){
+            if (s.indexOf(kw)!==-1) found[key]=found[key]||true;
+          });
+        }
+      });
+
+      // completeness: proportion of the 6 most important elements present (objective,date,venue,budget,promotion,volunteers)
+      var coreKeys = ["objective","date","venue","budget","promotion","volunteers"];
+      var presentCount = coreKeys.reduce(function(acc,k){return acc + (found[k]?1:0);},0);
+      var completenessPercent = Math.round((presentCount / coreKeys.length) * 100);
+
+      // Feasibility heuristic: presence of budget or resource mention improves feasibility; permits moderate boost.
+      var feasibilityScore = 0;
+      if (found["budget"]) feasibilityScore += 30;
+      if (found["venue"]) feasibilityScore += 25;
+      if (found["volunteers"]) feasibilityScore += 20;
+      if (found["permits"]) feasibilityScore += 15;
+      if (found["promotion"]) feasibilityScore += 10;
+      feasibilityScore = Math.min(100, feasibilityScore + completenessPercent*0.2);
+
+      // Final: weighted between completeness 60% and feasibility 40%
+      var finalScore = Math.round(completenessPercent*0.6 + feasibilityScore*0.4);
+
+      return {
+        score: finalScore,
+        details: {
+          foundElements: found,
+          completenessPercent: completenessPercent,
+          feasibilityScore: Math.round(feasibilityScore)
+        }
+      };
+    }
+
+    // Community problem evaluator
+    function evaluateCommunityProblem(data) {
+      var problem = (data["problem_statement"]||"").toLowerCase();
+      var sols = [(data["solution1"]||""),(data["solution2"]||""),(data["solution3"]||"")];
+      var selected = data["selected_solution"] || "Solution 1";
+      var justification = (data["justification"]||"").toLowerCase();
+
+      // For each solution, compute feasibility, clarity, and pros/cons mention heuristics
+      function scoreSolution(text) {
+        var s = text.toLowerCase();
+        var len = s.length;
+        var clarity = Math.min(100, Math.round(Math.min(1, len/120) * 100)); // longer but concise => better clarity up to 120 chars baseline
+        // feasibility: presence of implementation hints, cost/time, partnerships
+        var feasKeywords = ["cost","budget","timeline","phase","partner","stakeholder","pilot","scale","permit","maintenance","staff","volunteer"];
+        var feasCount = feasKeywords.reduce(function(acc,kw){ return acc + (s.indexOf(kw)!==-1 ? 1 : 0); }, 0);
+        var feasibility = Math.min(100, 30 + feasCount*15); // baseline 30, each hint adds 15
+        // reasoning quality: mention of pros/cons or tradeoffs
+        var reasoning = Math.min(100, (s.indexOf("pros")!==-1 || s.indexOf("cons")!==-1 || s.indexOf("tradeoff")!==-1 || s.indexOf("benefit")!==-1) ? 80 : 40 );
+        // combined: weighted average
+        var combined = Math.round(clarity*0.4 + feasibility*0.4 + reasoning*0.2);
+        return {clarity: clarity, feasibility: feasibility, reasoning: reasoning, combined: combined};
+      }
+
+      var scores = sols.map(scoreSolution);
+      // selected index
+      var selIndex = (selected === "Solution 1") ? 0 : (selected === "Solution 2") ? 1 : 2;
+      var selectedScore = scores[selIndex] ? scores[selIndex].combined : 0;
+
+      // Justification quality: length and presence of cost/time/pros/cons
+      var justLen = justification.length;
+      var quality = Math.min(100, Math.round(Math.min(1, justLen / 400) * 100));
+      if (justification.indexOf("cost")!==-1 || justification.indexOf("budget")!==-1) quality = Math.min(100, quality + 10);
+      if (justification.indexOf("pros")!==-1 || justification.indexOf("cons")!==-1 || justification.indexOf("benefit")!==-1) quality = Math.min(100, quality + 15);
+
+      // Final score: combination of selected solution combined score (70%) and justification quality (30%)
+      var finalScore = Math.round(selectedScore * 0.7 + quality * 0.3);
+
+      return {
+        score: finalScore,
+        details: {
+          perSolution: scores,
+          selectedIndex: selIndex,
+          selectedCombined: selectedScore,
+          justificationQuality: quality
+        }
+      };
+    }
+
+    // ---------------------------
+    // Aggregate indices, combining task performance, AI usage, and confidence
+    // Indices:
+    //  - AI Influence Index: percent of tasks where user used AI assistance (higher => more AI usage)
+    //  - Cognitive Load Relief: combination of AI usage (positive) and self-reported confidence (higher confidence => relief) and task speed proxies (not collected) => computed from available)
+    //  - Creativity Originality: taken from creativity task
+    // ---------------------------
+    function computeAggregates(resultsByTask, rawData) {
+      // resultsByTask: object with keys sudoku, meals, creativity, event, community each with .score and .aiUsed (true/false) and .confidence numeric 0-100
+      var taskKeys = ["sudoku","meals","creativity","event","community"];
+      // AI Influence Index: percent tasks with AI used
+      var aiCount = taskKeys.reduce(function(acc,k){ return acc + (resultsByTask[k].aiUsed ? 1 : 0); }, 0);
+      var aiInfluenceIndex = Math.round((aiCount / taskKeys.length) * 100);
+
+      // Cognitive Load Relief: reward AI assistance and high confidence. We compute:
+      // relief = average( normalizedConfidence ) * 0.6 + (aiUsedPercent*100)*0.4
+      var averageConfidence = Math.round(taskKeys.reduce(function(acc,k){ return acc + (resultsByTask[k].confidence || 0); },0) / taskKeys.length || 0);
+      var relief = Math.round(averageConfidence * 0.6 + aiInfluenceIndex * 0.4);
+
+      // Creativity Originality: from creativity task final score
+      var creativityOriginality = resultsByTask["creativity"].score;
+
+      // Overall Performance Index: weighted average of tasks performance (equal weight)
+      var overallPerformance = Math.round(taskKeys.reduce(function(acc,k){ return acc + resultsByTask[k].score; },0) / taskKeys.length);
+
+      // Bias adjustment: if many tasks used AI, give transparency flag (no score change but note)
+      var note = "";
+      if (aiCount >= 3) note = "You reported using external assistance for multiple tasks; interpret originality and independent problem-solving indices accordingly.";
+
+      return {
+        aiInfluenceIndex: aiInfluenceIndex,
+        cognitiveLoadRelief: relief,
+        creativityOriginality: creativityOriginality,
+        overallPerformance: overallPerformance,
+        averageConfidence: averageConfidence,
+        aiCount: aiCount,
+        note: note
+      };
+    }
+
+    // ---------------------------
+    // On survey complete: evaluate all tasks and render results + charts + feedback
+    // ---------------------------
+    survey.onComplete.add(function (sender) {
+      var data = sender.data || {};
+
+      // Evaluate each task
+      var sudokuRes = evaluateSudoku(data);
+      var mealsRes = evaluateMeals(data);
+      var creativityRes = evaluateCreativity(data);
+      var eventRes = evaluateEventPlan(data);
+      var communityRes = evaluateCommunityProblem(data);
+
+      // Attach AI usage and confidence markers from respective fields
+      var resultsByTask = {
+        sudoku: { score: sudokuRes.score, aiUsed: (data["sudoku_ai_assist"] === "Yes"), confidence: toNumber(data["sudoku_confidence"]) || 0, details: sudokuRes.details },
+        meals: { score: mealsRes.score, aiUsed: (data["meals_ai_assist"] === "Yes"), confidence: toNumber(data["meals_confidence"]) || 0, details: mealsRes.details },
+        creativity: { score: creativityRes.score, aiUsed: (data["creativity_ai_assist"] === "Yes"), confidence: toNumber(data["creativity_confidence"]) || 0, details: creativityRes.details },
+        event: { score: eventRes.score, aiUsed: (data["event_ai_assist"] === "Yes"), confidence: toNumber(data["event_confidence"]) || 0, details: eventRes.details },
+        community: { score: communityRes.score, aiUsed: (data["community_ai_assist"] === "Yes"), confidence: toNumber(data["community_confidence"]) || 0, details: communityRes.details }
+      };
+
+      // Compute aggregates
+      var aggregates = computeAggregates(resultsByTask, data);
+
+      // Show results container
+      $("#resultsContainer").show();
+
+      // Render summary cards
+      var summaryHtml = "";
+      summaryHtml += "<div class='chartCard'><div class='small'>AI Influence Index</div><div class='scoreBig'>" + aggregates.aiInfluenceIndex + "%</div><div class='muted'>Tasks with reported AI assistance: " + aggregates.aiCount + " of 5</div></div>";
+      summaryHtml += "<div class='chartCard'><div class='small'>Cognitive Load Relief</div><div class='scoreBig'>" + aggregates.cognitiveLoadRelief + "%</div><div class='muted'>Avg confidence: " + aggregates.averageConfidence + "%</div></div>";
+      summaryHtml += "<div class='chartCard'><div class='small'>Creativity Originality</div><div class='scoreBig'>" + aggregates.creativityOriginality + "%</div><div class='muted'>Creativity task score</div></div>";
+      $("#summaryBoxes").html(summaryHtml);
+
+      // Prepare charts: AI Influence (doughnut), Cognitive Load Relief, Creativity
+      $("#chartsRow").html(
+        "<div class='chartCard'><canvas id='chartAI'></canvas></div>" +
+        "<div class='chartCard'><canvas id='chartRelief'></canvas></div>" +
+        "<div class='chartCard'><canvas id='chartCreativity'></canvas></div>"
+      );
+
+      // Create doughnut charts
+      var ctxAI = document.getElementById('chartAI').getContext('2d');
+      var chartAI = new Chart(ctxAI, {
+        type: 'doughnut',
+        data: {
+          labels: ['AI Used','Not Used'],
+          datasets: [{
+            data: [aggregates.aiInfluenceIndex, 100 - aggregates.aiInfluenceIndex],
+            backgroundColor: ['#ff7f50', '#e6eef8'],
+            borderWidth: 0
+          }]
+        },
+        options: { plugins: { legend: { display: false }, title: { display: true, text: 'AI Influence Index' } }, cutout: '70%' }
+      });
+
+      var ctxRelief = document.getElementById('chartRelief').getContext('2d');
+      var chartRelief = new Chart(ctxRelief, {
+        type: 'doughnut',
+        data: {
+          labels: ['Relief','Remaining Load'],
+          datasets: [{
+            data: [aggregates.cognitiveLoadRelief, 100 - aggregates.cognitiveLoadRelief],
+            backgroundColor: ['#6ad07a', '#f0f6f2'],
+            borderWidth: 0
+          }]
+        },
+        options: { plugins: { legend: { display: false }, title: { display: true, text: 'Cognitive Load Relief' } }, cutout: '70%' }
+      });
+
+      var ctxCreat = document.getElementById('chartCreativity').getContext('2d');
+      var chartCreat = new Chart(ctxCreat, {
+        type: 'doughnut',
+        data: {
+          labels: ['Originality','Commonality'],
+          datasets: [{
+            data: [aggregates.creativityOriginality, 100 - aggregates.creativityOriginality],
+            backgroundColor: ['#7aa0ff', '#eef4ff'],
+            borderWidth: 0
+          }]
+        },
+        options: { plugins: { legend: { display: false }, title: { display: true, text: 'Creativity Originality' } }, cutout: '70%' }
+      });
+
+      // Build textual feedback and advice based on scores
+      var feedback = "<h3>Feedback & Recommendations</h3>";
+      feedback += "<div class='small'>Overall Performance Index: <strong>" + aggregates.overallPerformance + "%</strong></div>";
+      feedback += "<div class='resultSection'><strong>Task breakdown (score out of 100):</strong><table class='resultsTable'><thead><tr><th>Task</th><th>Score</th><th>AI used?</th><th>Confidence</th></tr></thead><tbody>";
+      feedback += "<tr><td>Sudoku (logical reasoning)</td><td>" + resultsByTask.sudoku.score + "</td><td>" + (resultsByTask.sudoku.aiUsed ? "Yes" : "No") + "</td><td>" + resultsByTask.sudoku.confidence + "%</td></tr>";
+      feedback += "<tr><td>Meal planning (budget & nutrition)</td><td>" + resultsByTask.meals.score + "</td><td>" + (resultsByTask.meals.aiUsed ? "Yes" : "No") + "</td><td>" + resultsByTask.meals.confidence + "%</td></tr>";
+      feedback += "<tr><td>Creativity (paperclip uses)</td><td>" + resultsByTask.creativity.score + "</td><td>" + (resultsByTask.creativity.aiUsed ? "Yes" : "No") + "</td><td>" + resultsByTask.creativity.confidence + "%</td></tr>";
+      feedback += "<tr><td>Event planning (practical planning)</td><td>" + resultsByTask.event.score + "</td><td>" + (resultsByTask.event.aiUsed ? "Yes" : "No") + "</td><td>" + resultsByTask.event.confidence + "%</td></tr>";
+      feedback += "<tr><td>Community problem (reasoning & feasibility)</td><td>" + resultsByTask.community.score + "</td><td>" + (resultsByTask.community.aiUsed ? "Yes" : "No") + "</td><td>" + resultsByTask.community.confidence + "%</td></tr>";
+      feedback += "</tbody></table></div>";
+
+      // Task-specific tailored advice:
+      feedback += "<div class='resultSection'><strong>Tailored advice:</strong><div class='feedback'>";
+      // Sudoku advice
+      if (resultsByTask.sudoku.score >= 90) feedback += "<div><strong>Sudoku:</strong> Excellent logical performance. Keep practicing to maintain speed under timed conditions.</div>";
+      else if (resultsByTask.sudoku.score >= 60) feedback += "<div><strong>Sudoku:</strong> Solid work. Review row/column checks and box constraints to eliminate common mistakes.</div>";
+      else feedback += "<div><strong>Sudoku:</strong> Consider stepwise scanning: check rows, columns, then boxes. Practice small puzzles to improve accuracy.</div>";
+
+      // Meals advice
+      if (resultsByTask.meals.score >= 80) feedback += "<div><strong>Meal planning:</strong> Good planning and budget fit. Consider adding more variety and explicit protein/vegetable pairings for better nutrition.</div>";
+      else if (resultsByTask.meals.score >= 50) feedback += "<div><strong>Meal planning:</strong> Looks reasonable but check costs and include protein/vegetable items for balance. Use simple shopping lists to reduce cost variance.</div>";
+      else feedback += "<div><strong>Meal planning:</strong> Re-evaluate costs or increase budget realism; consider bulk cooking and low-cost protein sources (beans, eggs) for balance.</div>";
+
+      // Creativity advice
+      if (resultsByTask.creativity.score >= 80) feedback += "<div><strong>Creativity:</strong> Excellent originality and diversity. Document the thought process to preserve the best ideas.</div>";
+      else if (resultsByTask.creativity.score >= 50) feedback += "<div><strong>Creativity:</strong> Good ideas but you can push for more diverse categories. Try 'what else could this be in a different context?' prompting.</div>";
+      else feedback += "<div><strong>Creativity:</strong> Try lateral-thinking prompts (combine contexts, imagine constraints) to generate less conventional uses.</div>";
+
+      // Event planning advice
+      if (resultsByTask.event.score >= 80) feedback += "<div><strong>Event planning:</strong> Strong plan. Consider creating a simple project timeline and contingency plan next.</div>";
+      else if (resultsByTask.event.score >= 50) feedback += "<div><strong>Event planning:</strong> Add explicit dates, volunteers and a basic budget to improve feasibility.</div>";
+      else feedback += "<div><strong>Event planning:</strong> Focus on clarifying objective, estimated budget and securing a venue; these elements raise feasibility quickly.</div>";
+
+      // Community problem advice
+      if (resultsByTask.community.score >= 80) feedback += "<div><strong>Community solutions:</strong> Well-justified choice; you considered implementation details. Consider stakeholder outreach plans next.</div>";
+      else if (resultsByTask.community.score >= 50) feedback += "<div><strong>Community solutions:</strong> Add cost/timeline estimates and pros/cons analysis to strengthen feasibility judgments.</div>";
+      else feedback += "<div><strong>Community solutions:</strong> Expand the justification with expected costs, timelines and pilot evaluation metrics to improve decision quality.</div>";
+
+      feedback += "</div></div>";
+
+      // Additional note about AI usage
+      if (aggregates.note) feedback += "<div class='resultSection'><strong>Note on AI usage:</strong><div class='feedback'>" + escapeHtml(aggregates.note) + "</div></div>";
+
+      $("#feedbackText").html(feedback);
+
+      // Raw data display (trim sensitive content)
+      var rawHtml = "<table class='resultsTable'><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>";
+      for (var k in data) {
+        var val = data[k];
+        // Shorten long texts to preserve readability
+        var display = (typeof val === "string") ? escapeHtml(val) : escapeHtml(JSON.stringify(val));
+        if (display.length > 500) display = display.substring(0,500) + " ...";
+        rawHtml += "<tr><td>" + escapeHtml(k) + "</td><td>" + display + "</td></tr>";
+      }
+      rawHtml += "</tbody></table>";
+      $("#rawData").html(rawHtml);
+
+      // Optionally send to server if enabled
+      var sendEnabled = Array.isArray(data["consent_server_send"]) && data["consent_server_send"].indexOf("Enable sending") !== -1;
+      var endpoint = (data["server_endpoint"] || "").trim();
+      if (sendEnabled && endpoint && endpoint.toLowerCase().indexOf("http") === 0) {
+        $("#serverSendStatus").text("Sending data to server...");
+        // Build payload: minimal anonymized representation (raw + computed)
+        var payload = {
+          timestamp: (new Date()).toISOString(),
+          aggregates: aggregates,
+          taskScores: {
+            sudoku: resultsByTask.sudoku.score,
+            meals: resultsByTask.meals.score,
+            creativity: resultsByTask.creativity.score,
+            event: resultsByTask.event.score,
+            community: resultsByTask.community.score
+          },
+          aiUsageFlags: {
+            sudoku: resultsByTask.sudoku.aiUsed,
+            meals: resultsByTask.meals.aiUsed,
+            creativity: resultsByTask.creativity.aiUsed,
+            event: resultsByTask.event.aiUsed,
+            community: resultsByTask.community.aiUsed
+          },
+          raw: data // researcher should ensure data handling and privacy
+        };
+        // Send JSON via POST
+        fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).then(function(resp){
+          if (resp.ok) {
+            $("#serverSendStatus").text("Data successfully sent to " + endpoint + " (server response: " + resp.status + ").");
+          } else {
+            $("#serverSendStatus").text("Server returned status " + resp.status + ". Data may not have been accepted.");
+          }
+        }).catch(function(err){
+          $("#serverSendStatus").text("Failed to send data to server: " + (err.message || err));
+        });
+      } else {
+        $("#serverSendStatus").text(sendEnabled ? "Server endpoint not provided or invalid. Data was not sent." : "Data send to server not enabled.");
+      }
+
+      // Scroll to results
+      $("html, body").animate({ scrollTop: $("#resultsContainer").offset().top - 10 }, 400);
+    });
+
+    // ---------------------------
+    // Comments & How to extend
+    // - To add more tasks/pages: modify surveyJSON.pages and re-render (or push new page and call survey.render).
+    // - To adjust scoring rubrics: edit the corresponding evaluateXxx functions above.
+    // - This file is self-contained and ready to save as research_survey.html. It uses CDN JS/CSS only.
+    // ---------------------------
+  </script>
+</body>
+</html>
